@@ -13,5 +13,17 @@ typedef  CPU_ADDR               CPU_STK_SIZE;
 
 typedef  volatile  CPU_INT32U  CPU_REG32;
 
+
+/*
+*********************************************************************************************************
+*                                         FUNCTION PROTOTYPES
+*********************************************************************************************************
+*/
+
+void        CPU_IntDis       (void); 	/* 在cpu_a.asm定义 */
+void        CPU_IntEn        (void);	/* 在cpu_a.asm定义 */
+
+
+
 #endif /* CPU_H */
 

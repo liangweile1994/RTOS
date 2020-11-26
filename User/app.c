@@ -60,6 +60,9 @@ int main(void)
 {	
 	OS_ERR err;
 	
+	CPU_IntDis();
+	
+	OS_CPU_SysTickInit(10);
 	
 	
 	/* 初始化相关的全局变量 */
@@ -112,7 +115,7 @@ void Task1( void *p_arg )
 		delay( 100 );
 		
 		/* 任务切换，这里是手动切换 */		
-		OSSched();
+		//OSSched();
 	}
 }
 
@@ -127,7 +130,7 @@ void Task2( void *p_arg )
 		delay( 100 );
 		
 		/* 任务切换，这里是手动切换 */
-		OSSched();
+		//OSSched();
 	}
 }
 
