@@ -307,6 +307,7 @@ struct os_tcb
 {
 	CPU_STK         *StkPtr;
 	CPU_STK_SIZE    StkSize;
+	OS_TICK					TaskDelayTicks;
 };
 
 /*
@@ -321,6 +322,23 @@ OS_EXT    OS_TCB         *OSTCBCurPtr;
 OS_EXT    OS_TCB         *OSTCBHighRdyPtr;
 OS_EXT    OS_RDY_LIST    OSRdyList[OS_CFG_PRIO_MAX];
 OS_EXT    OS_STATE       OSRunning;
+OS_EXT		OS_TCB				 OSIdleTaskTCB;
+OS_EXT		OS_IDLE_CTR		 OSIdleTaskCtr;
+
+
+
+/*
+************************************************************************************************************************
+************************************************************************************************************************
+*                                                   外部声明
+************************************************************************************************************************
+************************************************************************************************************************
+*/
+
+/* 空闲任务堆栈起始地址 */
+extern CPU_STK      * const  OSCfg_IdleTaskStkBasePtr;
+/* 空闲任务堆栈大小 */
+extern CPU_STK_SIZE   const  OSCfg_IdleTaskStkSize;
 
 
 /*
@@ -338,8 +356,16 @@ void OSTaskCreate (OS_TCB *p_tcb,
                    CPU_STK_SIZE  stk_size,
                    OS_ERR        *p_err);
 
-void OSTimeTick(void);
+									 
+									 
+/* ================================================================================================================== */
+/*                                                 TIME MANAGEMENT                                                    */
+/* ================================================================================================================== */				   
+void          OSTimeTick                (void);	
+void          OSTimeDly                 (OS_TICK dly);
 
+									 
+									 
 /* ================================================================================================================== */
 /*                                                    MISCELLANEOUS                                                   */
 /* ================================================================================================================== */				   
@@ -347,6 +373,12 @@ void OSTimeTick(void);
 void OSInit(OS_ERR *p_err);	
 void OSStart (OS_ERR *p_err);				   
 void OSSched (void);
+
+/* ------------------------------------------------ INTERNAL FUNCTIONS ---------------------------------------------- */
+
+void          OS_IdleTask               (void                  *p_arg);
+
+void          OS_IdleTaskInit           (OS_ERR                *p_err);			
 
 				   
 /*

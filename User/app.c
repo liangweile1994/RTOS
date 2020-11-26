@@ -38,6 +38,7 @@ static   OS_TCB    Task2TCB;
 
 void     Task1( void *p_arg );
 void     Task2( void *p_arg );
+void     OS_IdleTask(void *p_arg);
 
 /*
 ************************************************************************************************************************
@@ -110,9 +111,11 @@ void Task1( void *p_arg )
 	for( ;; )
 	{
 		flag1 = 1;
-		delay( 100 );		
+		//delay( 100 );	
+		OSTimeDly(2);		
 		flag1 = 0;
-		delay( 100 );
+		//delay( 100 );
+		OSTimeDly(2);
 		
 		/* 任务切换，这里是手动切换 */		
 		//OSSched();
@@ -125,13 +128,23 @@ void Task2( void *p_arg )
 	for( ;; )
 	{
 		flag2 = 1;
-		delay( 100 );		
+		//delay( 100 );
+		OSTimeDly(2);		
 		flag2 = 0;
-		delay( 100 );
+		//delay( 100 );
+		OSTimeDly(2);
 		
 		/* 任务切换，这里是手动切换 */
 		//OSSched();
 	}
 }
 
-
+/* 空闲任务 */
+void OS_IdleTask(void *p_arg)
+{
+	p_arg = p_arg;
+	for(;;)
+	{
+		OSIdleTaskCtr++;
+	}
+}
