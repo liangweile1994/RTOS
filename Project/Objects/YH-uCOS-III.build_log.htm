@@ -9,41 +9,38 @@ License Information: 1 1, 1, LIC=BL201-CPJVB-REXH3-AMURU-UVXYT-GU13S
  
 Tool Versions:
 Toolchain:       MDK-ARM Professional  Version: 5.30.0.0
-Toolchain Path:  D:\Keil_v5\ARM\ARMCLANG\Bin
-C Compiler:      ArmClang.exe V6.14
-Assembler:       Armasm.exe V6.14
-Linker/Locator:  ArmLink.exe V6.14
-Library Manager: ArmAr.exe V6.14
-Hex Converter:   FromElf.exe V6.14
+Toolchain Path:  D:\Keil_v5\ARM\ARMCC\Bin
+C Compiler:      Armcc.exe V5.06 update 6 (build 750)
+Assembler:       Armasm.exe V5.06 update 6 (build 750)
+Linker/Locator:  ArmLink.exe V5.06 update 6 (build 750)
+Library Manager: ArmAr.exe V5.06 update 6 (build 750)
+Hex Converter:   FromElf.exe V5.06 update 6 (build 750)
 CPU DLL:         SARMCM3.DLL V5.30.0.0
 Dialog DLL:      DCM.DLL V1.17.3.0
 Target DLL:      UL2CM3.DLL V1.163.3.0
 Dialog DLL:      TCM.DLL V1.42.0.0
  
 <h2>Project:</h2>
-C:\Users\Administrator\Desktop\RTOS\RTOS\Project\YH-uCOS-III.uvprojx
-Project File Date:  11/25/2020
+C:\Users\Administrator\Desktop\lwl\基于STM32开发板\5-任务的定义与切换\Project\YH-uCOS-III.uvprojx
+Project File Date:  11/13/2020
 
 <h2>Output:</h2>
-*** Using Compiler 'V6.14', folder: 'D:\Keil_v5\ARM\ARMCLANG\Bin'
+*** Using Compiler 'V5.06 update 6 (build 750)', folder: 'D:\Keil_v5\ARM\ARMCC\Bin'
 Rebuild target 'Target 1'
-../User/app.c(1): warning: In file included from...
-../User/uC-CPU\cpu.h(16): warning: no newline at end of file [-Wnewline-eof]
-#endif 
-       ^
-../User/app.c(7): warning: unused variable 'Task1Stk' [-Wunused-variable]
-static          CPU_STK                         Task1Stk[TASK1_STK_SIZE];
-                                                ^
-../User/app.c(8): warning: unused variable 'Task2Stk' [-Wunused-variable]
-static          CPU_STK                         Task2Stk[TASK2_STK_SIZE];
-                                                ^
-3 warnings generated.
-compiling app.c...
+assembling os_cpu_a.s...
+compiling os_var.c...
+compiling os_cpu_c.c...
+compiling os_task.c...
+compiling os_core.c...
+..\User\uCOS-III\Source\os_core.c(48): warning:  #188-D: enumerated type mixed with another type
+  		*p_err = OS_STATE_OS_RUNNING;
+..\User\uCOS-III\Source\os_core.c: 1 warning, 0 errors
 assembling startup_ARMCM3.s...
+compiling app.c...
 compiling system_ARMCM3.c...
 linking...
-Program Size: Code=288 RO-data=992 RW-data=4 ZI-data=1028  
-".\Objects\YH-uCOS-III.axf" - 0 Error(s), 3 Warning(s).
+Program Size: Code=1012 RO-data=224 RW-data=40 ZI-data=4608  
+".\Objects\YH-uCOS-III.axf" - 0 Error(s), 1 Warning(s).
 
 <h2>Software Packages used:</h2>
 
@@ -64,8 +61,8 @@ Package Vendor: ARM
    * Component: ARM::CMSIS:CORE:5.4.0
 
    * Component: ARM::Device:Startup:1.2.2
-      Source file:   Device\ARM\ARMCM3\Source\system_ARMCM3.c
       Include file:  Device\ARM\ARMCM3\Include\ARMCM3.h
+      Source file:   Device\ARM\ARMCM3\Source\system_ARMCM3.c
       Source file:   Device\ARM\ARMCM3\Source\ARM\startup_ARMCM3.s
 Build Time Elapsed:  00:00:00
 </pre>

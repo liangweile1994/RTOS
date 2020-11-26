@@ -1,7 +1,9 @@
 #ifndef OS_CFG_H
 #define OS_CFG_H
 
-#define OS_CFG_PRIO_MAX					32u
+/* 支持最大的优先级 */
+#define OS_CFG_PRIO_MAX                32u
 
 
-#endif
+#endif /* OS_CFG_H */
+
