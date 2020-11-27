@@ -352,7 +352,7 @@
             <NoWarn>0</NoWarn>
             <uSurpInc>0</uSurpInc>
             <useXO>0</useXO>
-            <ClangAsOpt>1</ClangAsOpt>
+            <ClangAsOpt>4</ClangAsOpt>
             <VariousControls>
               <MiscControls></MiscControls>
               <Define></Define>
@@ -414,6 +414,11 @@
               <FilePath>..\User\uCOS-III\Source\os_task.c</FilePath>
             </File>
             <File>
+              <FileName>os_time.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\uCOS-III\Source\os_time.c</FilePath>
+            </File>
+            <File>
               <FileName>os_type.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\User\uCOS-III\Source\os_type.h</FilePath>
@@ -424,9 +429,9 @@
               <FilePath>..\User\uCOS-III\Source\os_var.c</FilePath>
             </File>
             <File>
-              <FileName>os_time.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\uCOS-III\Source\os_time.c</FilePath>
+              <FileName>os_cfg_app.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\uCOS-III\Source\os_cfg_app.h</FilePath>
             </File>
             <File>
               <FileName>os_cfg_app.c</FileName>
@@ -434,9 +439,9 @@
               <FilePath>..\User\uCOS-III\Source\os_cfg_app.c</FilePath>
             </File>
             <File>
-              <FileName>os_cfg_app.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\User\uCOS-III\Source\os_cfg_app.h</FilePath>
+              <FileName>os_prio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\uCOS-III\Source\os_prio.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -469,9 +474,29 @@
               <FilePath>..\User\uC-CPU\cpu.h</FilePath>
             </File>
             <File>
-              <FileName>cpu_a.s</FileName>
+              <FileName>cpu_a.asm</FileName>
               <FileType>2</FileType>
-              <FilePath>..\User\uC-CPU\cpu_a.s</FilePath>
+              <FilePath>..\User\uC-CPU\cpu_a.asm</FilePath>
+            </File>
+            <File>
+              <FileName>cpu_core.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\uC-CPU\cpu_core.c</FilePath>
+            </File>
+            <File>
+              <FileName>cpu_core.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\uC-CPU\cpu_core.h</FilePath>
+            </File>
+            <File>
+              <FileName>cpu_cfg.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\uC-CPU\cpu_cfg.h</FilePath>
+            </File>
+            <File>
+              <FileName>cpu_def.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\User\uC-CPU\cpu_def.h</FilePath>
             </File>
           </Files>
         </Group>

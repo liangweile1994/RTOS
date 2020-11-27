@@ -4,7 +4,8 @@
 ;********************************************************************************************************
     IMPORT  OSTCBCurPtr                                         ; 外部文件引人的参考
     IMPORT  OSTCBHighRdyPtr
-		
+    IMPORT  OSPrioCur
+    IMPORT  OSPrioHighRdy
     EXPORT  OSStartHighRdy                                      ; 该文件定义的函数
 	EXPORT  PendSV_Handler
 
@@ -34,7 +35,7 @@ NVIC_PENDSVSET  EQU     0x10000000                              ; 触发PendSV异常
 ; 2、在开始第一次上下文切换之前，设置psp=0
 ; 3、触发PendSV异常，开始上下文切换
 ;********************************************************************************************************
-OSStartHighRdy
+OSStartHighRdy PROC
 	LDR		R0, = NVIC_SYSPRI14              ; 设置  PendSV 异常优先级为最低
 	LDR     R1, = NVIC_PENDSV_PRI
 	STRB    R1, [R0]
@@ -50,11 +51,12 @@ OSStartHighRdy
 	
 OSStartHang
 	B       OSStartHang                       ; 程序应永远不会运行到这里	
-
+	
+	ENDP
 ;********************************************************************************************************
 ;                                          PendSVHandler异常
 ;********************************************************************************************************
-PendSV_Handler
+PendSV_Handler PROC
 ; 任务的保存，即把CPU寄存器的值存储到任务的堆栈中	
 	CPSID   I                                 ; 关中断，NMI和HardFault除外，防止上下文切换被中断	
 	MRS     R0, PSP                           ; 将psp的值加载到R0
@@ -69,7 +71,14 @@ PendSV_Handler
 	STR     R0, [R1]                          ; 存储R0的值到	OSTCBCurPtr->OSTCBStkPtr，这个时候R0存的是任务空闲栈的栈顶
 
 ; 任务的切换，即把下一个要运行的任务的堆栈内容加载到CPU寄存器中
-OS_CPU_PendSVHandler_nosave  
+OS_CPU_PendSVHandler_nosave
+
+; OSPrioCur   = OSPrioHighRdy;
+    LDR     R0, =OSPrioCur                                      
+    LDR     R1, =OSPrioHighRdy
+    LDRB    R2, [R1]
+    STRB    R2, [R0]
+	
 	; OSTCBCurPtr = OSTCBHighRdyPtr;
 	LDR     R0, = OSTCBCurPtr                 ; 加载 OSTCBCurPtr 指针的地址到R0，这里LDR属于伪指令
 	LDR     R1, = OSTCBHighRdyPtr             ; 加载 OSTCBHighRdyPtr 指针的地址到R1，这里LDR属于伪指令
@@ -87,5 +96,16 @@ OS_CPU_PendSVHandler_nosave
 	
 	NOP                                       ; 为了汇编指令对齐，不然会有警告
 	
+	ENDP
+
+;********************************************************************************************************
+;                                                关中断
+; NMI 和硬FAULT 除外
+;********************************************************************************************************
+AllIntDis  PROC
+	CPSID   I
 	
+	ENDP
+	
+	NOP                                       ; 为了汇编指令对齐，不然会有警告
 	END                                       ; 汇编文件结束

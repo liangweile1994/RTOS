@@ -22,6 +22,10 @@
 uint32_t flag1;
 uint32_t flag2;
 
+uint32_t TimeStart;
+uint32_t TimeEnd;
+uint32_t TimeUse;
+
 /*
 ************************************************************************************************************************
 *                                                  TCB & STACK & 任务声明
@@ -38,7 +42,6 @@ static   OS_TCB    Task2TCB;
 
 void     Task1( void *p_arg );
 void     Task2( void *p_arg );
-void     OS_IdleTask(void *p_arg);
 
 /*
 ************************************************************************************************************************
@@ -59,12 +62,17 @@ void delay(uint32_t count);
 */
 int main(void)
 {	
-	OS_ERR err;
+	OS_ERR err;	
 	
+	
+	/* CPU初始化：1、初始化时间戳 */
+	CPU_Init();	
+	
+	/* 关闭中断 */
 	CPU_IntDis();
 	
-	OS_CPU_SysTickInit(10);
-	
+	/* 配置SysTick 10ms 中断一次 */
+	OS_CPU_SysTickInit (10);
 	
 	/* 初始化相关的全局变量 */
 	OSInit(&err);
@@ -111,14 +119,14 @@ void Task1( void *p_arg )
 	for( ;; )
 	{
 		flag1 = 1;
-		//delay( 100 );	
-		OSTimeDly(2);		
-		flag1 = 0;
-		//delay( 100 );
-		OSTimeDly(2);
 		
-		/* 任务切换，这里是手动切换 */		
-		//OSSched();
+		TimeStart = OS_TS_GET();
+		OSTimeDly(20);	
+		TimeEnd = OS_TS_GET();
+		TimeUse = TimeEnd - TimeStart;
+		
+		flag1 = 0;
+		OSTimeDly(2);
 	}
 }
 
@@ -128,23 +136,10 @@ void Task2( void *p_arg )
 	for( ;; )
 	{
 		flag2 = 1;
-		//delay( 100 );
 		OSTimeDly(2);		
 		flag2 = 0;
-		//delay( 100 );
 		OSTimeDly(2);
-		
-		/* 任务切换，这里是手动切换 */
-		//OSSched();
 	}
 }
 
-/* 空闲任务 */
-void OS_IdleTask(void *p_arg)
-{
-	p_arg = p_arg;
-	for(;;)
-	{
-		OSIdleTaskCtr++;
-	}
-}
+

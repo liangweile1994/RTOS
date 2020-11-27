@@ -3,12 +3,27 @@
 
 /*
 ************************************************************************************************************************
+*                                                 临界段处理
+************************************************************************************************************************
+*/
+
+#define  OS_CRITICAL_ENTER()                    CPU_CRITICAL_ENTER()
+
+#define  OS_CRITICAL_ENTER_CPU_CRITICAL_EXIT()
+
+#define  OS_CRITICAL_EXIT()                     CPU_CRITICAL_EXIT()
+
+#define  OS_CRITICAL_EXIT_NO_SCHED()            CPU_CRITICAL_EXIT()
+
+/*
+************************************************************************************************************************
 *                                                 包含的头文件
 ************************************************************************************************************************
 */
 #include "os_type.h"
 #include "os_cfg.h"
 #include "os_cpu.h"
+#include "cpu_core.h"
 
 /*
 ************************************************************************************************************************
@@ -22,6 +37,9 @@
 #else
 #define    OS_EXT  extern
 #endif
+
+
+#define  OS_PRIO_TBL_SIZE          ((OS_CFG_PRIO_MAX - 1u) / (DEF_INT_CPU_NBR_BITS) + 1u)
 
 /*
 ************************************************************************************************************************
@@ -294,8 +312,9 @@ typedef  struct  os_tcb              OS_TCB;
 */
 struct os_rdy_list
 {
-	OS_TCB        *HeadPtr;//头
-	OS_TCB        *TailPtr;//尾
+	OS_TCB        *HeadPtr;       
+	OS_TCB        *TailPtr;
+	OS_OBJ_QTY    NbrEntries;
 };
 
 /*
@@ -307,7 +326,17 @@ struct os_tcb
 {
 	CPU_STK         *StkPtr;
 	CPU_STK_SIZE    StkSize;
-	OS_TICK					TaskDelayTicks;
+	
+	/* 任务延时周期个数 */
+	OS_TICK         TaskDelayTicks;
+	
+	/* 任务优先级 */
+	OS_PRIO         Prio;
+	
+	/* 就绪列表双向链表的下一个指针 */
+	OS_TCB          *NextPtr;
+	/* 就绪列表双向链表的前一个指针 */
+    OS_TCB          *PrevPtr;
 };
 
 /*
@@ -322,10 +351,21 @@ OS_EXT    OS_TCB         *OSTCBCurPtr;
 OS_EXT    OS_TCB         *OSTCBHighRdyPtr;
 OS_EXT    OS_RDY_LIST    OSRdyList[OS_CFG_PRIO_MAX];
 OS_EXT    OS_STATE       OSRunning;
-OS_EXT		OS_TCB				 OSIdleTaskTCB;
-OS_EXT		OS_IDLE_CTR		 OSIdleTaskCtr;
 
+OS_EXT    OS_IDLE_CTR    OSIdleTaskCtr;
+OS_EXT    OS_TCB         OSIdleTaskTCB;
 
+/* 优先级位映像表 */
+extern            CPU_DATA               OSPrioTbl[OS_PRIO_TBL_SIZE];
+/* 当前优先级 */
+OS_EXT            OS_PRIO                OSPrioCur;
+/* 最高优先级 */
+OS_EXT            OS_PRIO                OSPrioHighRdy;
+/* 保存的优先级，在内核提交的时候需要用到 */
+OS_EXT            OS_PRIO                OSPrioSaved;
+
+/* 调度器锁嵌套计数器 */
+OS_EXT            OS_NESTING_CTR         OSSchedLockNestingCtr;
 
 /*
 ************************************************************************************************************************
@@ -340,7 +380,6 @@ extern CPU_STK      * const  OSCfg_IdleTaskStkBasePtr;
 /* 空闲任务堆栈大小 */
 extern CPU_STK_SIZE   const  OSCfg_IdleTaskStkSize;
 
-
 /*
 ************************************************************************************************************************
 ************************************************************************************************************************
@@ -349,6 +388,9 @@ extern CPU_STK_SIZE   const  OSCfg_IdleTaskStkSize;
 ************************************************************************************************************************
 */
 
+/* ================================================================================================================== */
+/*                                                 TASK MANAGEMENT                                                    */
+/* ================================================================================================================== */
 void OSTaskCreate (OS_TCB *p_tcb, 
                    OS_TASK_PTR   p_task, 
                    void          *p_arg,
@@ -356,16 +398,17 @@ void OSTaskCreate (OS_TCB *p_tcb,
                    CPU_STK_SIZE  stk_size,
                    OS_ERR        *p_err);
 
-									 
-									 
+				   
+				   
+				   
 /* ================================================================================================================== */
 /*                                                 TIME MANAGEMENT                                                    */
 /* ================================================================================================================== */				   
 void          OSTimeTick                (void);	
 void          OSTimeDly                 (OS_TICK dly);
 
-									 
-									 
+
+				   
 /* ================================================================================================================== */
 /*                                                    MISCELLANEOUS                                                   */
 /* ================================================================================================================== */				   
@@ -378,9 +421,7 @@ void OSSched (void);
 
 void          OS_IdleTask               (void                  *p_arg);
 
-void          OS_IdleTaskInit           (OS_ERR                *p_err);			
-
-				   
+void          OS_IdleTaskInit           (OS_ERR                *p_err);				   
 /*
 ************************************************************************************************************************
 ************************************************************************************************************************
@@ -405,6 +446,24 @@ CPU_STK *OSTaskStkInit (OS_TASK_PTR  p_task,
 /* --------------------------------------------- 就绪列表管理 ---------------------------------------------- */
 
 void          OS_RdyListInit            (void);
-						
+void          OS_RdyListInsert          (OS_TCB       *p_tcb);
+void          OS_RdyListInsertHead      (OS_TCB       *p_tcb);
+void          OS_RdyListInsertTail      (OS_TCB       *p_tcb);
+void          OS_RdyListMoveHeadToTail  (OS_RDY_LIST  *p_rdy_list);
+void          OS_RdyListRemove          (OS_TCB       *p_tcb);
+
+
+/* ----------------------------------------------- 优先级管理 ---------------------------------------------- */
+
+void          OS_PrioInit               (void);
+
+void          OS_PrioInsert             (OS_PRIO                prio);
+
+void          OS_PrioRemove             (OS_PRIO                prio);
+
+OS_PRIO       OS_PrioGetHighest         (void);
+
+
+
 #endif    /* OS_H */
 
