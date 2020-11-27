@@ -17,7 +17,7 @@ void OSInit (OS_ERR *p_err)
 	/* 初始化优先级变量 */
 	OSPrioCur                       = (OS_PRIO)0;           
     OSPrioHighRdy                   = (OS_PRIO)0;
-    OSPrioSaved                     = (OS_PRIO)0;
+	
 	/* 初始化优先级表 */
 	OS_PrioInit();
 	
@@ -37,8 +37,17 @@ void OSStart (OS_ERR *p_err)
 {	
 	if( OSRunning == OS_STATE_OS_STOPPED )
 	{
+#if 0		
 		/* 手动配置任务1先运行 */
 		OSTCBHighRdyPtr = OSRdyList[0].HeadPtr;
+#endif
+		OSPrioHighRdy   = OS_PrioGetHighest();		            /* 寻找最高的优先级 */
+		OSPrioCur       = OSPrioHighRdy;
+		
+		OSTCBHighRdyPtr = OSRdyList[OSPrioHighRdy].HeadPtr;		/* 找到最高优先级的TCB */
+		OSTCBCurPtr     = OSTCBHighRdyPtr;
+		
+		OSRunning       = OS_STATE_OS_RUNNING;                  /* 标记OS开始运行 */
 		
 		/* 启动任务切换，不会返回 */
 		OSStartHighRdy();
@@ -55,17 +64,7 @@ void OSStart (OS_ERR *p_err)
 /* 任务切换，实际就是触发PendSV异常，然后在PendSV异常中进行上下文切换 */
 void OSSched(void)
 {
-#if 0	/* 非常简单的任务调度：两个任务轮流执行 */
-	if( OSTCBCurPtr == OSRdyList[0].HeadPtr )
-	{
-		OSTCBHighRdyPtr = OSRdyList[1].HeadPtr;
-	}
-	else
-	{
-		OSTCBHighRdyPtr = OSRdyList[0].HeadPtr;
-	}
-#endif
-	
+#if 0	
 	/* 如果当前任务是空闲任务，那么就去尝试执行任务1或者任务2，看看他们的延时时间是否结束
 	   如果任务的延时时间均没有到期，那就返回继续执行空闲任务 */
 	if( OSTCBCurPtr == &OSIdleTaskTCB )
@@ -121,6 +120,30 @@ void OSSched(void)
 	
 	/* 任务切换 */
 	OS_TASK_SW();
+#endif
+	
+	CPU_SR_ALLOC();
+	
+	/* 进入临界区 */
+	OS_CRITICAL_ENTER();
+	
+	/* 查找最高优先级的任务 */
+	OSPrioHighRdy   = OS_PrioGetHighest();
+	OSTCBHighRdyPtr = OSRdyList[OSPrioHighRdy].HeadPtr;	
+	
+	/* 如果最高优先级的任务是当前任务则直接返回，不进行任务切换 */
+	if (OSTCBHighRdyPtr == OSTCBCurPtr)
+	{
+		/* 退出临界区 */
+		OS_CRITICAL_EXIT();
+		
+		return;
+	}	
+		/* 退出临界区 */
+	OS_CRITICAL_EXIT();
+	
+	/* 任务切换 */	
+	OS_TASK_SW();	
 }
 
 
@@ -146,6 +169,7 @@ void  OS_IdleTaskInit(OS_ERR  *p_err)
 	OSTaskCreate( (OS_TCB     *)&OSIdleTaskTCB, 
 			      (OS_TASK_PTR )OS_IdleTask, 
 			      (void       *)0,
+				  (OS_PRIO)(OS_CFG_PRIO_MAX - 1u),
 			      (CPU_STK    *)OSCfg_IdleTaskStkBasePtr,
 			      (CPU_STK_SIZE)OSCfg_IdleTaskStkSize,
 			      (OS_ERR     *)p_err );
