@@ -62,6 +62,24 @@
 #define  OS_STATE_OS_STOPPED                    (OS_STATE)(0u)
 #define  OS_STATE_OS_RUNNING                    (OS_STATE)(1u)
 
+                                                                /* ------------------- TASK STATES ------------------ */
+#define  OS_TASK_STATE_BIT_DLY               (OS_STATE)(0x01u)  /*   /-------- SUSPENDED bit                          */
+                                                                /*   |                                                */
+#define  OS_TASK_STATE_BIT_PEND              (OS_STATE)(0x02u)  /*   | /-----  PEND      bit                          */
+                                                                /*   | |                                              */
+#define  OS_TASK_STATE_BIT_SUSPENDED         (OS_STATE)(0x04u)  /*   | | /---  Delayed/Timeout bit                    */
+                                                                /*   | | |                                            */
+                                                                /*   V V V                                            */
+
+#define  OS_TASK_STATE_RDY                    (OS_STATE)(  0u)  /*   0 0 0     Ready                                  */
+#define  OS_TASK_STATE_DLY                    (OS_STATE)(  1u)  /*   0 0 1     Delayed or Timeout                     */
+#define  OS_TASK_STATE_PEND                   (OS_STATE)(  2u)  /*   0 1 0     Pend                                   */
+#define  OS_TASK_STATE_PEND_TIMEOUT           (OS_STATE)(  3u)  /*   0 1 1     Pend + Timeout                         */
+#define  OS_TASK_STATE_SUSPENDED              (OS_STATE)(  4u)  /*   1 0 0     Suspended                              */
+#define  OS_TASK_STATE_DLY_SUSPENDED          (OS_STATE)(  5u)  /*   1 0 1     Suspended + Delayed or Timeout         */
+#define  OS_TASK_STATE_PEND_SUSPENDED         (OS_STATE)(  6u)  /*   1 1 0     Suspended + Pend                       */
+#define  OS_TASK_STATE_PEND_TIMEOUT_SUSPENDED (OS_STATE)(  7u)  /*   1 1 1     Suspended + Pend + Timeout             */
+#define  OS_TASK_STATE_DEL                    (OS_STATE)(255u)
 
 /*
 ************************************************************************************************************************
@@ -295,6 +313,7 @@ typedef  enum  os_err {
 ************************************************************************************************************************
 */
 
+typedef  struct  os_tick_spoke       OS_TICK_SPOKE;
 typedef  struct  os_rdy_list         OS_RDY_LIST;
 typedef  void                        (*OS_TASK_PTR)(void *p_arg);
 typedef  struct  os_tcb              OS_TCB;
@@ -308,6 +327,17 @@ typedef  struct  os_tcb              OS_TCB;
 ************************************************************************************************************************
 */
 
+/*
+------------------------------------------------------------------------------------------------------------------------
+*                                                    TICK DATA TYPE
+------------------------------------------------------------------------------------------------------------------------
+*/
+
+struct  os_tick_spoke {
+    OS_TCB              *FirstPtr;                          /* Pointer to list of tasks in tick spoke                 */
+    OS_OBJ_QTY           NbrEntries;                        /* Current number of entries in the tick spoke            */
+    OS_OBJ_QTY           NbrEntriesMax;                     /* Peak number of entries in the tick spoke               */
+};
 
 /*
 ------------------------------------------------------------------------------------------------------------------------
@@ -341,6 +371,26 @@ struct os_tcb
 	OS_TCB          *NextPtr;
 	/* 就绪列表双向链表的前一个指针 */
     OS_TCB          *PrevPtr;
+
+    /*时基列表相关字段*/	
+	OS_TCB          *TickNextPtr;
+    OS_TCB          *TickPrevPtr;	
+	OS_TICK_SPOKE   *TickSpokePtr;
+	
+	OS_TICK         TickCtrMatch;
+	OS_TICK         TickRemain;
+	
+	/* 时间片相关字段 */
+	OS_TICK              TimeQuanta;
+    OS_TICK              TimeQuantaCtr;
+	
+	OS_STATE             TaskState;
+	
+#if OS_CFG_TASK_SUSPEND_EN > 0u
+/* 任务挂起函数OSTaskSuspend()计数器 */
+    OS_NESTING_CTR       SuspendCtr;
+#endif
+
 };
 
 /*
@@ -371,6 +421,9 @@ OS_EXT            OS_PRIO                OSPrioSaved;
 /* 调度器锁嵌套计数器 */
 OS_EXT            OS_NESTING_CTR         OSSchedLockNestingCtr;
 
+/* Tick 计数器 */
+OS_EXT            OS_TICK                OSTickCtr;
+
 /*
 ************************************************************************************************************************
 ************************************************************************************************************************
@@ -383,6 +436,13 @@ OS_EXT            OS_NESTING_CTR         OSSchedLockNestingCtr;
 extern CPU_STK      * const  OSCfg_IdleTaskStkBasePtr;
 /* 空闲任务堆栈大小 */
 extern CPU_STK_SIZE   const  OSCfg_IdleTaskStkSize;
+
+/* 时基列表 */
+extern  OS_TICK_SPOKE  OSCfg_TickWheel[];
+/* 时基列表大小 */
+extern  OS_OBJ_QTY    const OSCfg_TickWheelSize;
+
+
 
 /*
 ************************************************************************************************************************
@@ -401,9 +461,24 @@ void OSTaskCreate (OS_TCB *p_tcb,
 				   OS_PRIO       prio,
                    CPU_STK       *p_stk_base,
                    CPU_STK_SIZE  stk_size,
+				   OS_TICK       time_quanta,
                    OS_ERR        *p_err);
-
 				   
+#if OS_CFG_TASK_SUSPEND_EN > 0u
+void          OSTaskResume              (OS_TCB                *p_tcb,
+                                         OS_ERR                *p_err);
+
+void          OSTaskSuspend             (OS_TCB                *p_tcb,
+                                         OS_ERR                *p_err);
+#endif				   
+
+#if OS_CFG_TASK_DEL_EN > 0u
+void          OSTaskDel                 (OS_TCB                *p_tcb,
+                                         OS_ERR                *p_err);
+#endif
+
+/* --------------------------------------------------- 内部函数 ----------------------------------------------------- */
+void  OS_TaskRdy (OS_TCB  *p_tcb);			   
 				   
 				   
 /* ================================================================================================================== */
@@ -468,6 +543,32 @@ void          OS_PrioRemove             (OS_PRIO                prio);
 
 OS_PRIO       OS_PrioGetHighest         (void);
 
+/* ---------------------------------------------- 时基列表管理 ---------------------------------------------- */
+
+//void          OS_TickListInit           (void);
+
+//void          OS_TickListInsert         (OS_TCB                *p_tcb,
+//                                         OS_TICK                time,
+//                                         OS_OPT                 opt,
+//                                         OS_ERR                *p_err);
+
+//void          OS_TickListRemove         (OS_TCB                *p_tcb);
+
+//void          OS_TickListResetPeak      (void);
+
+//void          OS_TickListUpdate         (void);
+
+void  OS_TickListInit     (void);
+void  OS_TickListInsert   (OS_TCB *p_tcb,OS_TICK time);
+void  OS_TickListRemove   (OS_TCB  *p_tcb);
+void  OS_TickListUpdate   (void);
+
+/* --------------------------------------------- 调度------------------------------------------------------ */
+
+
+#if OS_CFG_SCHED_ROUND_ROBIN_EN > 0u
+void          OS_SchedRoundRobin        (OS_RDY_LIST           *p_rdy_list);
+#endif
 
 
 #endif    /* OS_H */

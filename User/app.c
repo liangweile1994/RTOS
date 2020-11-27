@@ -83,34 +83,32 @@ int main(void)
 	OSInit(&err);
 	
 	/* 创建任务 */
-	OSTaskCreate( (OS_TCB*)&Task1TCB, 
-	              (OS_TASK_PTR )Task1, 
-                  (void *)0,
-				  (OS_PRIO)1,
-				  (CPU_STK*)&Task1Stk[0],
-				  (CPU_STK_SIZE)  TASK1_STK_SIZE,
-				  (OS_ERR *)&err );
+	OSTaskCreate( (OS_TCB       *)&Task1TCB, 
+	              (OS_TASK_PTR   )Task1, 
+                  (void         *)0,
+				  (OS_PRIO       )1,
+				  (CPU_STK      *)&Task1Stk[0],
+				  (CPU_STK_SIZE  )TASK1_STK_SIZE,
+				  (OS_TICK       )0,
+				  (OS_ERR       *)&err );
 				  
-	OSTaskCreate( (OS_TCB*)&Task2TCB, 
-	              (OS_TASK_PTR )Task2, 
-                  (void *)0,
-				  (OS_PRIO)2,
-				  (CPU_STK*)&Task2Stk[0],
-				  (CPU_STK_SIZE)  TASK2_STK_SIZE,
-				  (OS_ERR *)&err );	
+	OSTaskCreate( (OS_TCB       *)&Task2TCB, 
+	              (OS_TASK_PTR   )Task2, 
+                  (void         *)0,
+				  (OS_PRIO       )2,
+				  (CPU_STK      *)&Task2Stk[0],
+				  (CPU_STK_SIZE  )TASK2_STK_SIZE,
+				  (OS_TICK       )0,
+				  (OS_ERR       *)&err );	
 				  
-	OSTaskCreate( (OS_TCB*)&Task3TCB, 
-	              (OS_TASK_PTR )Task3, 
-                  (void *)0,
-				  (OS_PRIO)3,
-				  (CPU_STK*)&Task3Stk[0],
-				  (CPU_STK_SIZE)  TASK3_STK_SIZE,
-				  (OS_ERR *)&err );
-#if 0				  
-	/* 将任务加入到就绪列表 */
-	OSRdyList[0].HeadPtr = &Task1TCB;
-	OSRdyList[1].HeadPtr = &Task2TCB;
-#endif 
+	OSTaskCreate( (OS_TCB       *)&Task3TCB, 
+	              (OS_TASK_PTR   )Task3, 
+                  (void         *)0,
+				  (OS_PRIO       )3,
+				  (CPU_STK      *)&Task3Stk[0],
+				  (CPU_STK_SIZE  )TASK3_STK_SIZE,
+				  (OS_TICK       )0,
+				  (OS_ERR       *)&err ); 
 				  
 	/* 启动OS，将不再返回 */				
 	OSStart(&err);
@@ -131,23 +129,30 @@ void delay (uint32_t count)
 
 void Task1( void *p_arg )
 {	
+	OS_ERR err;
+	
 	for( ;; )
     {
 		flag1 = 1;
-		OSTimeDly(1);		
+		OSTaskSuspend(&Task1TCB,&err);		
 		flag1 = 0;
-		OSTimeDly(1);		
+		OSTaskSuspend(&Task1TCB,&err);
+		
 	}
 }
 
 void Task2( void *p_arg )
 {
+	OS_ERR err;
+	
 	for( ;; )
     {
 		flag2 = 1;
-		OSTimeDly(1);		
-		flag2 = 0;
 		OSTimeDly(1);
+		//OSTaskResume(&Task1TCB,&err);		
+		flag2 = 0;
+		OSTimeDly(1);;
+		OSTaskResume(&Task1TCB,&err);		
 	}
 }
 
